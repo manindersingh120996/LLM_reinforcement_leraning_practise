@@ -1,25 +1,41 @@
-# All hyperparameters live here, not in code
+# =============================================================================
+# Reward Model — Default Configuration
+# All hyperparameters live here. Do not hardcode numbers in source files.
+# Load with OmegaConf: cfg = OmegaConf.load("configs/default.yaml")
+# =============================================================================
 
 model:
-  base_model_name: ""   # e.g. "gpt2", "meta-llama/Llama-3-8b"
-  hidden_dropout: 0.1
+  backbone: "gpt2"           # HuggingFace model ID. gpt2-medium for production.
+  freeze_base: false         # If true, only train the scalar head (fast, low quality)
+  num_unfrozen_layers: 4     # Fine-tune last N transformer blocks. -1 = all layers.
+  dropout: 0.1               # Dropout on the scalar head linear layer
 
 data:
-  train_path: ""
-  eval_path: ""
-  max_length: 512
+  dataset_name: "Anthropic/hh-rlhf"
+  max_length: 512            # Max tokens for (prompt + response) concatenation
+  train_split: "train"
+  val_split: "test"
+  num_workers: 4             # DataLoader worker processes
+  val_size: 2000             # Number of val examples to evaluate on
 
 training:
-  seed: 42
   batch_size: 8
   learning_rate: 1.0e-5
-  num_epochs: 3
   weight_decay: 0.01
-  warmup_ratio: 0.03
-  gradient_accumulation_steps: 1
+  max_epochs: 1
+  warmup_steps: 100
+  gradient_clip_norm: 1.0    # Max gradient norm — prevents exploding gradients
+  eval_every_n_steps: 500
+  save_every_n_steps: 1000
+  output_dir: "checkpoints/"
+  seed: 42
+  fp16: false                # Set true if your GPU supports it (A100, RTX 30xx+)
+
+loss:
+  use_stable: true           # Numerically stable softplus form vs naive log(sigmoid)
 
 logging:
-  log_dir: "logs"
   log_every_n_steps: 50
+  project_name: "reward-model"
 
 device: "cuda"

@@ -1,7 +1,19 @@
-torch
-transformers
-datasets
-pyyaml
-numpy
-scipy
-pytest
+# Core ML
+torch>=2.0.0
+transformers>=4.35.0
+datasets>=2.14.0
+ 
+# Config management
+omegaconf>=2.3.0
+ 
+# Scientific computing
+numpy>=1.24.0
+scipy>=1.10.0
+ 
+# Utilities
+tqdm>=4.65.0
+ 
+# Dev/testing
+pytest>=7.4.0
+pytest-cov>=4.1.0
+ 
