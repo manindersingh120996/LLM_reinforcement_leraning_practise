@@ -38,4 +38,9 @@ logging:
   log_every_n_steps: 50
   project_name: "reward-model"
 
-device: "cuda"
+hub:
+  push_to_hub: true
+  repo_id: "philomath-1209/reward-model-hh-rlhf"   # change to your HF username
+  private: false                                          # set true if you want it private
+  commit_message: "Phase 1 reward model, GPT-2 fine-tuned on hh-rlhf using Anthropic/hh-rlhf dataset"
+  token: null                                             # null = use HF_TOKEN env variable

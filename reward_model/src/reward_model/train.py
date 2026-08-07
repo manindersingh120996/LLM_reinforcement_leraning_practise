@@ -131,6 +131,47 @@ def main() -> None:
         json.dump(report.to_dict(), f, indent=2)
     logger.info(f"Evaluation results saved to: {results_path}")
 
+    # -----------------------------------------------------------------------
+    # Push to HuggingFace Hub (if enabled)
+    # -----------------------------------------------------------------------
+    if cfg.hub.get("push_to_hub", False):
+        repo_id = cfg.hub.repo_id
+        logger.info(f"Pushing model to HuggingFace Hub: {repo_id}")
+        logger.info("This uploads the fine-tuned backbone + scalar head + model card.")
+
+        try:
+            # Load the best checkpoint before pushing
+            # (trainer.train() may have ended on a step checkpoint, not the best one)
+            best_ckpt = Path(cfg.training.output_dir) / "checkpoint_best.pt"
+            if best_ckpt.exists():
+                logger.info(f"Loading best checkpoint from {best_ckpt} before pushing...")
+                trainer.load_checkpoint(str(best_ckpt))
+            else:
+                logger.warning(
+                    "checkpoint_best.pt not found — pushing weights from end of training. "
+                    "This is fine if your last step was also your best."
+                )
+
+            repo_url = model.save_to_hub(
+                repo_id=repo_id,
+                cfg=cfg,
+                evaluation_report=report,
+                private=cfg.hub.get("private", False),
+                commit_message=cfg.hub.get("commit_message", "Add reward model"),
+                token=cfg.hub.get("token", None),
+            )
+            logger.info(f"Model successfully pushed to: {repo_url}")
+
+        except Exception as e:
+            # Hub push failure should never crash a training run.
+            # The model is safely checkpointed locally regardless.
+            logger.error(f"Failed to push to HuggingFace Hub: {e}")
+            logger.error(
+                "Your model is still saved locally in "
+                f"{cfg.training.output_dir}. "
+                "You can push manually later with model.save_to_hub(...)."
+            )
+
 
 if __name__ == "__main__":
     main()
