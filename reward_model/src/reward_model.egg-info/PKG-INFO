@@ -1,0 +1,16 @@
+Metadata-Version: 2.1
+Name: reward_model
+Version: 0.1.0
+Summary: Reward model trained from scratch using Bradley-Terry pairwise ranking loss.
+Author: Maninder Singh
+Requires-Python: >=3.9
+Requires-Dist: torch>=2.0.0
+Requires-Dist: transformers>=4.35.0
+Requires-Dist: datasets>=2.14.0
+Requires-Dist: omegaconf>=2.3.0
+Requires-Dist: numpy>=1.24.0
+Requires-Dist: scipy>=1.10.0
+Requires-Dist: tqdm>=4.65.0
+Provides-Extra: dev
+Requires-Dist: pytest>=7.4.0; extra == "dev"
+Requires-Dist: pytest-cov>=4.1.0; extra == "dev"

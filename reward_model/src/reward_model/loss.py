@@ -112,7 +112,7 @@ class BradleyTerryLoss(nn.Module):
     """
     def __init__(self, use_stable:bool = True)->None:
         super().__init__()
-        self.use_stable = self.use_stable
+        self.use_stable = use_stable
 
     def forward(
             self,
