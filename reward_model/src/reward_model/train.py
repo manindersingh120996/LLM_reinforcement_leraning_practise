@@ -99,7 +99,7 @@ def main() -> None:
     # Model
     # -----------------------------------------------------------------------
     logger.info(f"Building model: {cfg.model.backbone}")
-    model = RewardModel(cfg)
+    model = RewardModel.from_pretrained_gpt2(cfg.model.backbone, cfg)
     stats = model.parameter_stats()
     logger.info(f"Model ready. {stats}")
 
@@ -132,44 +132,52 @@ def main() -> None:
     logger.info(f"Evaluation results saved to: {results_path}")
 
     # -----------------------------------------------------------------------
-    # Push to HuggingFace Hub (if enabled)
+    # Step 1 — Reload best checkpoint (may differ from final training step)
+    # -----------------------------------------------------------------------
+    best_ckpt = Path(cfg.training.output_dir) / "checkpoint_best.pt"
+    if best_ckpt.exists():
+        logger.info(f"Reloading best checkpoint: {best_ckpt}")
+        trainer.load_checkpoint(str(best_ckpt))
+    else:
+        logger.warning(
+            "checkpoint_best.pt not found — exporting end-of-training weights. "
+            "This is fine if no eval step triggered during training."
+        )
+
+    # -----------------------------------------------------------------------
+    # Step 2 — Save locally in HuggingFace format (always, before any upload)
+    # -----------------------------------------------------------------------
+    # save_pretrained writes:
+    #     config.json          — RewardModelConfig (architecture + hyperparams)
+    #     model.safetensors    — ALL weights: backbone + scalar head in one file
+    #
+    # This runs regardless of push_to_hub. Files are permanent on disk.
+    # If the upload fails, push manually:
+    #     huggingface-cli upload <repo_id> <local_export_dir>/ .
+    local_export_dir = Path(cfg.training.output_dir) / "hub_export"
+    logger.info(f"Saving model to: {local_export_dir}")
+    model.save_pretrained(local_export_dir)
+    logger.info(f"Local save complete — files safe at: {local_export_dir}")
+
+    # -----------------------------------------------------------------------
+    # Step 3 — Push to HuggingFace Hub (optional)
     # -----------------------------------------------------------------------
     if cfg.hub.get("push_to_hub", False):
         repo_id = cfg.hub.repo_id
-        logger.info(f"Pushing model to HuggingFace Hub: {repo_id}")
-        logger.info("This uploads the fine-tuned backbone + scalar head + model card.")
-
+        logger.info(f"Pushing to HuggingFace Hub: {repo_id}")
         try:
-            # Load the best checkpoint before pushing
-            # (trainer.train() may have ended on a step checkpoint, not the best one)
-            best_ckpt = Path(cfg.training.output_dir) / "checkpoint_best.pt"
-            if best_ckpt.exists():
-                logger.info(f"Loading best checkpoint from {best_ckpt} before pushing...")
-                trainer.load_checkpoint(str(best_ckpt))
-            else:
-                logger.warning(
-                    "checkpoint_best.pt not found — pushing weights from end of training. "
-                    "This is fine if your last step was also your best."
-                )
-
-            repo_url = model.save_to_hub(
-                repo_id=repo_id,
-                cfg=cfg,
-                evaluation_report=report,
+            model.push_to_hub(
+                repo_id,
                 private=cfg.hub.get("private", False),
                 commit_message=cfg.hub.get("commit_message", "Add reward model"),
                 token=cfg.hub.get("token", None),
             )
-            logger.info(f"Model successfully pushed to: {repo_url}")
-
+            logger.info(f"Pushed to: https://huggingface.co/{repo_id}")
         except Exception as e:
-            # Hub push failure should never crash a training run.
-            # The model is safely checkpointed locally regardless.
-            logger.error(f"Failed to push to HuggingFace Hub: {e}")
+            logger.error(f"Hub upload failed: {e}")
             logger.error(
-                "Your model is still saved locally in "
-                f"{cfg.training.output_dir}. "
-                "You can push manually later with model.save_to_hub(...)."
+                f"Files saved locally at: {local_export_dir}\n"
+                f"Push manually:  huggingface-cli upload {repo_id} {local_export_dir}/ ."
             )
 
 
