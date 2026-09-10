@@ -1,4 +1,4 @@
-from torch.utils.data import Dataset
+from torch.utils.data import Dataset, DataLoader
 from transformers import PreTrainedTokenizerBase
 
 
@@ -115,3 +115,24 @@ class PreferenceCollator:
             padded_sequences.append(sequence)
 
         return torch.stack(padded_sequences)
+
+def create_dataloader(
+    dataset: PreferenceDataset,
+    tokenizer,
+    batch_size: int,
+    shuffle: bool = False,
+    num_workers: int = 0,
+):
+    collator = PreferenceCollator(
+        pad_token_id=tokenizer.pad_token_id
+    )
+
+    dataloader = DataLoader(
+        dataset,
+        batch_size=batch_size,
+        shuffle=shuffle,
+        num_workers=num_workers,
+        collate_fn=collator,
+    )
+
+    return dataloader
