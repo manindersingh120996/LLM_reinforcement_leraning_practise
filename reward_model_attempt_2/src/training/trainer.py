@@ -1,6 +1,7 @@
 import torch
 
 from src.losses.bradley_terry import bradley_terry_loss
+from src.evaluation.evaluator import evaluate
 
 
 class RewardModelTrainer:
@@ -70,3 +71,11 @@ class RewardModelTrainer:
             "loss": average_loss,
             "accuracy": accuracy,
         }
+
+    def validate(self, dataloader):
+
+        return evaluate(
+            model=self.model,
+            dataloader=dataloader,
+            device=self.device,
+        )

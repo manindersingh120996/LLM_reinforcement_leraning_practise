@@ -1,7 +1,19 @@
-defaults:
-  seed: 42
-  batch_size: 8
-  learning_rate: 1e-4
-  model:
-    hidden_size: 256
-    num_layers: 2
+model:
+  name: gpt2
+
+data:
+  dataset_name: Anthropic/hh-rlhf
+  max_length: 512
+  train_split: train
+  val_split: test
+  train_sample_size: 20
+  val_sample_size: 20
+
+training:
+  batch_size: 4
+  learning_rate: 1.0e-5
+  num_epochs: 5
+
+checkpoint:
+  directory: checkpoints
+  metric: val_accuracy
