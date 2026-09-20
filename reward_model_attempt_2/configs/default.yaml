@@ -1,11 +1,14 @@
 model:
-  name: gpt2
+  name: "gpt2"
 
 data:
-  dataset_name: Anthropic/hh-rlhf
+  dataset_name: "Anthropic/hh-rlhf"
+
   max_length: 512
-  train_split: train
-  val_split: test
+
+  train_split: "train"
+  val_split: "test"
+
   train_sample_size: 20
   val_sample_size: 20
 
@@ -15,5 +18,6 @@ training:
   num_epochs: 5
 
 checkpoint:
-  directory: checkpoints
-  metric: val_accuracy
+  directory: "checkpoints"
+  best_model_name: "best_model.pt"
+  metric: "val_accuracy"

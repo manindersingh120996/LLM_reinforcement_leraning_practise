@@ -2,3 +2,5 @@
 *.py[cod]
 
 *.pt
+
+reward_model_attempt_2/checkpoint_test.pt
