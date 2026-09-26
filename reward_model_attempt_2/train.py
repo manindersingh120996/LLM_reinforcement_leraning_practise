@@ -12,6 +12,7 @@ from src.models.reward_model import GPT2RewardModel
 from src.training.trainer import RewardModelTrainer
 from src.utils.checkpoint import save_checkpoint
 from src.utils.config import load_config
+from transformers import get_linear_schedule_with_warmup
 
 
 CONFIG_PATH = r"./configs/default.yaml"
@@ -121,6 +122,28 @@ def main():
     # print("weight decay applied...")
 
     # --------------------------------------------------
+    # Learning-rate scheduler
+    # --------------------------------------------------
+
+    num_training_steps = (
+        len(train_dataloader)
+        * training_config["num_epochs"]
+    )
+
+    num_warmup_steps = int(
+        num_training_steps
+        * training_config["scheduler"]["warmup_ratio"]
+    )
+
+    scheduler = get_linear_schedule_with_warmup(
+        optimizer=optimizer,
+        num_warmup_steps=num_warmup_steps,
+        num_training_steps=num_training_steps,
+    )
+    print(f"Total training steps: {num_training_steps}")
+    print(f"Warmup steps: {num_warmup_steps}")
+
+    # --------------------------------------------------
     # Trainer
     # --------------------------------------------------
 
@@ -128,6 +151,7 @@ def main():
         model=model,
         optimizer=optimizer,
         device=device,
+        scheduler = scheduler
     )
 
     # --------------------------------------------------
@@ -149,6 +173,11 @@ def main():
 
         val_metrics = trainer.validate(
             val_dataloader
+        )
+        current_lr = optimizer.param_groups[0]["lr"]
+
+        print(
+            f"Current learning rate: {current_lr:.8f}"
         )
 
         print(

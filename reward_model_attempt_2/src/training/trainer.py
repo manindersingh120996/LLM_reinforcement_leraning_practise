@@ -11,10 +11,12 @@ class RewardModelTrainer:
         model,
         optimizer,
         device,
+        scheduler = None,
     ):
         self.model = model
         self.optimizer = optimizer
         self.device = device
+        self.scheduler = scheduler
 
     def train_epoch(self, dataloader):
 
@@ -49,12 +51,16 @@ class RewardModelTrainer:
             self.optimizer.zero_grad()
 
             loss.backward()
+
             torch.nn.utils.clip_grad_norm_(
                 self.model.parameters(),
                 max_norm=1.0,
             )
 
             self.optimizer.step()
+
+            if self.scheduler is not None:
+                self.scheduler.step()
 
             batch_size = chosen_rewards.size(0)
 
