@@ -116,7 +116,9 @@ def main():
     optimizer = AdamW(
         model.parameters(),
         lr=training_config["learning_rate"],
+        weight_decay=training_config["weight_decay"],
     )
+    # print("weight decay applied...")
 
     # --------------------------------------------------
     # Trainer

@@ -15,7 +15,14 @@ data:
 training:
   batch_size: 4
   learning_rate: 1.0e-5
+  weight_decay: 0.01
   num_epochs: 5
+
+  gradient_clip_norm: 1.0
+
+  scheduler:
+    type: "linear"
+    warmup_ratio: 0.1
 
 checkpoint:
   directory: "checkpoints"
