@@ -1,6 +1,32 @@
 from torch.utils.data import Dataset, DataLoader
 from transformers import PreTrainedTokenizerBase
+from datasets import load_dataset
 
+
+def load_preference_data(
+    dataset_name,
+    train_split,
+    val_split,
+    train_sample_size=None,
+    val_sample_size=None,
+):
+    if train_sample_size is not None:
+        train_split = f"{train_split}[:{train_sample_size}]"
+
+    if val_sample_size is not None:
+        val_split = f"{val_split}[:{val_sample_size}]"
+
+    train_data = load_dataset(
+        dataset_name,
+        split=train_split,
+    )
+
+    val_data = load_dataset(
+        dataset_name,
+        split=val_split,
+    )
+
+    return train_data, val_data
 
 class PreferenceDataset(Dataset):
 

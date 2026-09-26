@@ -20,4 +20,4 @@ training:
 checkpoint:
   directory: "checkpoints"
   best_model_name: "best_model.pt"
-  metric: "val_accuracy"
+  metric: "accuracy"
