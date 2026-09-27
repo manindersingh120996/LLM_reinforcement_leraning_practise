@@ -36,4 +36,7 @@ checkpoint:
   directory: "checkpoints"
   best_model_name: "best_model.pt"
   latest_model_name: "latest_model.pt"
+
   metric: "accuracy"
+
+  resume: true

@@ -20,7 +20,7 @@ class RewardModelTrainer:
         self.scheduler = scheduler
         self.gradient_clip_norm = gradient_clip_norm
 
-    def train_epoch(self, dataloader):
+    def train_epoch(self, dataloader, global_step):
 
         self.model.train()
 
@@ -64,7 +64,7 @@ class RewardModelTrainer:
 
             if self.scheduler is not None:
                 self.scheduler.step()
-
+            global_step += 1
             batch_size = chosen_rewards.size(0)
 
             correct = (
@@ -83,6 +83,7 @@ class RewardModelTrainer:
         return {
             "loss": average_loss,
             "accuracy": accuracy,
+            "global_step" : global_step
         }
 
     def validate(self, dataloader):

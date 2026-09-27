@@ -10,7 +10,7 @@ from src.data.dataset import (
 )
 from src.models.reward_model import GPT2RewardModel
 from src.training.trainer import RewardModelTrainer
-from src.utils.checkpoint import save_checkpoint
+from src.utils.checkpoint import save_checkpoint, load_checkpoint
 from src.utils.config import load_config
 from src.utils.seed import set_seed
 from transformers import get_linear_schedule_with_warmup
@@ -203,19 +203,74 @@ def main():
         checkpoint_config["directory"],
         exist_ok=True,
     )
+    best_checkpoint_path = os.path.join(
+        checkpoint_config["directory"],
+        checkpoint_config["best_model_name"],
+    )
 
+    latest_checkpoint_path = os.path.join(
+        checkpoint_config["directory"],
+        checkpoint_config["latest_model_name"],
+    )
+    
     best_metric = float("-inf")
+    start_epoch = 0
+    global_step = 0
 
-    for epoch in range(training_config["num_epochs"]):
+    if (
+        checkpoint_config["resume"]
+        and os.path.exists(latest_checkpoint_path)
+    ):
+
+        print(
+            f"Resuming from checkpoint: "
+            f"{latest_checkpoint_path}"
+        )
+
+        checkpoint = load_checkpoint(
+            model=model,
+            optimizer=optimizer,
+            scheduler=scheduler,
+            path=latest_checkpoint_path,
+            device=device,
+        )
+
+        start_epoch = checkpoint["epoch"]
+
+        best_metric = checkpoint["best_metric"]
+
+        global_step = checkpoint["global_step"]
+
+        print(
+            f"Resuming from epoch: {start_epoch}"
+        )
+
+        print(
+            f"Resuming from global step : {global_step}"
+        )
+
+        print(
+            f"Previous best metric: {best_metric:.4f}"
+        )
+
+
+    for epoch in range(
+        start_epoch,
+        training_config["num_epochs"],
+    ):
 
         train_metrics = trainer.train_epoch(
-            train_dataloader
+            train_dataloader,
+            global_step= global_step
+
         )
 
         val_metrics = trainer.validate(
             val_dataloader
         )
         current_lr = optimizer.param_groups[0]["lr"]
+
+        global_step = train_metrics["global_step"]
 
         print(
             f"Current learning rate: {current_lr:.8f}"
@@ -233,6 +288,8 @@ def main():
         # Best checkpoint
         # --------------------------------------------------
 
+
+
         current_metric = val_metrics[
             checkpoint_config["metric"]
         ]
@@ -247,18 +304,34 @@ def main():
             )
 
             save_checkpoint(
-                model=model,
-                optimizer=optimizer,
-                epoch=epoch + 1,
-                val_loss=val_metrics["loss"],
-                val_accuracy=val_metrics["accuracy"],
-                path=checkpoint_path,
-            )
+                    model=model,
+                    optimizer=optimizer,
+                    scheduler=scheduler,
+                    epoch=epoch + 1,
+                    global_step=global_step,
+                    best_metric=best_metric,
+                    val_loss=val_metrics["loss"],
+                    val_accuracy=val_metrics["accuracy"],
+                    config=config,
+                    path=best_checkpoint_path,
+                )
 
             print(
                 f"  → New best checkpoint saved "
                 f"({checkpoint_config['metric']}: "
                 f"{current_metric:.4f})"
+            )
+        save_checkpoint(
+                model=model,
+                optimizer=optimizer,
+                scheduler=scheduler,
+                epoch=epoch + 1,
+                global_step=global_step,
+                best_metric=best_metric,
+                val_loss=val_metrics["loss"],
+                val_accuracy=val_metrics["accuracy"],
+                config=config,
+                path=latest_checkpoint_path,
             )
 
 
