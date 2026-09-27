@@ -1,21 +1,29 @@
+seed: 42
+
 model:
   name: "gpt2"
 
 data:
   dataset_name: "Anthropic/hh-rlhf"
 
+  train_split: "train"
+  test_split: "test"
+
   max_length: 512
 
-  train_split: "train"
-  val_split: "test"
+  validation_ratio: 0.1
 
   train_sample_size: 20
-  val_sample_size: 20
+  validation_sample_size: 20
+  test_sample_size: 20
+
+  num_workers: 0
 
 training:
   batch_size: 4
   learning_rate: 1.0e-5
   weight_decay: 0.01
+
   num_epochs: 5
 
   gradient_clip_norm: 1.0
@@ -27,4 +35,5 @@ training:
 checkpoint:
   directory: "checkpoints"
   best_model_name: "best_model.pt"
+  latest_model_name: "latest_model.pt"
   metric: "accuracy"

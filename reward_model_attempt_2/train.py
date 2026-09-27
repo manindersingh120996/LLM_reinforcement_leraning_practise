@@ -12,6 +12,7 @@ from src.models.reward_model import GPT2RewardModel
 from src.training.trainer import RewardModelTrainer
 from src.utils.checkpoint import save_checkpoint
 from src.utils.config import load_config
+from src.utils.seed import set_seed
 from transformers import get_linear_schedule_with_warmup
 
 
@@ -25,6 +26,7 @@ def main():
     # --------------------------------------------------
 
     config = load_config(CONFIG_PATH)
+    set_seed(config["seed"])
 
     model_config = config["model"]
     data_config = config["data"]
@@ -44,13 +46,16 @@ def main():
     # --------------------------------------------------
     # Load dataset
     # --------------------------------------------------
-
-    train_data, val_data = load_preference_data(
+    
+    train_data, val_data, test_data = load_preference_data(
         dataset_name=data_config["dataset_name"],
         train_split=data_config["train_split"],
-        val_split=data_config["val_split"],
+        test_split=data_config["test_split"],
+        validation_ratio=data_config["validation_ratio"],
+        seed=config["seed"],
         train_sample_size=data_config["train_sample_size"],
-        val_sample_size=data_config["val_sample_size"],
+        validation_sample_size=data_config["validation_sample_size"],
+        test_sample_size=data_config["test_sample_size"],
     )
 
     # --------------------------------------------------
@@ -91,6 +96,7 @@ def main():
         tokenizer=tokenizer,
         batch_size=training_config["batch_size"],
         shuffle=True,
+        num_workers=data_config["num_workers"]
     )
 
     val_dataloader = create_dataloader(
@@ -113,12 +119,46 @@ def main():
     # --------------------------------------------------
     # Optimizer
     # --------------------------------------------------
+    decay_parameters = []
+    no_decay_parameters = []
+
+    for name, parameter in model.named_parameters():
+
+        if not parameter.requires_grad:
+            continue
+
+        if (
+            "bias" in name
+            or "ln_" in name
+            or "layernorm" in name.lower()
+            or "norm" in name.lower()
+        ):
+            no_decay_parameters.append(parameter)
+        else:
+            decay_parameters.append(parameter)
+    print(
+    f"Parameters with weight decay: "
+    f"{len(decay_parameters)}"
+    )
+
+    print(
+        f"Parameters without weight decay: "
+        f"{len(no_decay_parameters)}"
+    )
 
     optimizer = AdamW(
-        model.parameters(),
+        [
+            {
+                "params": decay_parameters,
+                "weight_decay": training_config["weight_decay"],
+            },
+            {
+                "params": no_decay_parameters,
+                "weight_decay": 0.0,
+            },
+        ],
         lr=training_config["learning_rate"],
-        weight_decay=training_config["weight_decay"],
-    )
+)
     # print("weight decay applied...")
 
     # --------------------------------------------------
@@ -151,7 +191,8 @@ def main():
         model=model,
         optimizer=optimizer,
         device=device,
-        scheduler = scheduler
+        scheduler = scheduler,
+        gradient_clip_norm= training_config["gradient_clip_norm"]
     )
 
     # --------------------------------------------------
@@ -222,4 +263,6 @@ def main():
 
 
 if __name__ == "__main__":
+    config = load_config(CONFIG_PATH)
+    set_seed(config["seed"])
     main()

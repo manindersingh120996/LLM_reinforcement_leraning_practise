@@ -12,11 +12,13 @@ class RewardModelTrainer:
         optimizer,
         device,
         scheduler = None,
+        gradient_clip_norm = None,
     ):
         self.model = model
         self.optimizer = optimizer
         self.device = device
         self.scheduler = scheduler
+        self.gradient_clip_norm = gradient_clip_norm
 
     def train_epoch(self, dataloader):
 
@@ -52,10 +54,11 @@ class RewardModelTrainer:
 
             loss.backward()
 
-            torch.nn.utils.clip_grad_norm_(
-                self.model.parameters(),
-                max_norm=1.0,
-            )
+            if self.gradient_clip_norm is not None:
+                torch.nn.utils.clip_grad_norm_(
+                    self.model.parameters(),
+                    max_norm=self.gradient_clip_norm,
+                )
 
             self.optimizer.step()
 

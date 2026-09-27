@@ -3,30 +3,84 @@ from transformers import PreTrainedTokenizerBase
 from datasets import load_dataset
 
 
+from datasets import load_dataset
+
+
 def load_preference_data(
     dataset_name,
     train_split,
-    val_split,
+    test_split,
+    validation_ratio,
+    seed,
     train_sample_size=None,
-    val_sample_size=None,
+    validation_sample_size=None,
+    test_sample_size=None,
 ):
-    if train_sample_size is not None:
-        train_split = f"{train_split}[:{train_sample_size}]"
-
-    if val_sample_size is not None:
-        val_split = f"{val_split}[:{val_sample_size}]"
+    # --------------------------------------------------
+    # Load original training split
+    # --------------------------------------------------
 
     train_data = load_dataset(
         dataset_name,
         split=train_split,
     )
 
-    val_data = load_dataset(
+    # --------------------------------------------------
+    # Development mode
+    #
+    # If explicit train + validation sample sizes are
+    # provided, take exactly that many examples.
+    # --------------------------------------------------
+
+    if (
+        train_sample_size is not None
+        and validation_sample_size is not None
+    ):
+        total_samples = (
+            train_sample_size
+            + validation_sample_size
+        )
+
+        train_data = train_data.select(
+            range(total_samples)
+        )
+
+        split_data = train_data.train_test_split(
+            test_size=validation_sample_size,
+            seed=seed,
+        )
+
+        train_data = split_data["train"]
+        val_data = split_data["test"]
+
+    # --------------------------------------------------
+    # Full training mode
+    # --------------------------------------------------
+
+    else:
+        split_data = train_data.train_test_split(
+            test_size=validation_ratio,
+            seed=seed,
+        )
+
+        train_data = split_data["train"]
+        val_data = split_data["test"]
+
+    # --------------------------------------------------
+    # Load original test split
+    # --------------------------------------------------
+
+    test_data = load_dataset(
         dataset_name,
-        split=val_split,
+        split=test_split,
     )
 
-    return train_data, val_data
+    if test_sample_size is not None:
+        test_data = test_data.select(
+            range(test_sample_size)
+        )
+
+    return train_data, val_data, test_data
 
 class PreferenceDataset(Dataset):
 
