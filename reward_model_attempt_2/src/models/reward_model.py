@@ -2,27 +2,27 @@ import torch
 import torch.nn as nn
 
 from transformers import GPT2Model
+from huggingface_hub import PyTorchModelHubMixin
 
 
-class GPT2RewardModel(nn.Module):
+class GPT2RewardModel(
+    nn.Module,
+    PyTorchModelHubMixin,
+):
 
-    def __init__(self, model_name: str = "gpt2"):
+    def __init__(
+        self,
+        model_name: str = "gpt2",
+    ):
         super().__init__()
 
-        # --------------------------------------------------------
-        # GPT-2 backbone
-        # --------------------------------------------------------
+        self.model_name = model_name
 
         self.backbone = GPT2Model.from_pretrained(
             model_name
         )
 
-        # Hidden dimension of GPT-2
         hidden_size = self.backbone.config.n_embd
-
-        # --------------------------------------------------------
-        # Reward head
-        # --------------------------------------------------------
 
         self.reward_head = nn.Linear(
             hidden_size,
@@ -35,10 +35,6 @@ class GPT2RewardModel(nn.Module):
         attention_mask: torch.Tensor,
     ) -> torch.Tensor:
 
-        # --------------------------------------------------------
-        # GPT-2 forward pass
-        # --------------------------------------------------------
-
         outputs = self.backbone(
             input_ids=input_ids,
             attention_mask=attention_mask,
@@ -46,14 +42,9 @@ class GPT2RewardModel(nn.Module):
 
         hidden_states = outputs.last_hidden_state
 
-        # hidden_states:
-        # [batch_size, sequence_length, hidden_size]
-
-        # --------------------------------------------------------
-        # Find the final real token for every sequence
-        # --------------------------------------------------------
-
-        sequence_lengths = attention_mask.sum(dim=1) - 1
+        sequence_lengths = (
+            attention_mask.sum(dim=1) - 1
+        )
 
         batch_indices = torch.arange(
             hidden_states.size(0),
@@ -65,18 +56,8 @@ class GPT2RewardModel(nn.Module):
             sequence_lengths,
         ]
 
-        # final_hidden_states:
-        # [batch_size, hidden_size]
-
-        # --------------------------------------------------------
-        # Convert representation into scalar reward
-        # --------------------------------------------------------
-
         rewards = self.reward_head(
             final_hidden_states
         ).squeeze(-1)
-
-        # rewards:
-        # [batch_size]
 
         return rewards
