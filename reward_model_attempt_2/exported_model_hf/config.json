@@ -1,0 +1,13 @@
+{
+  "architectures": [
+    "GPT2RewardModel"
+  ],
+  "auto_map": {
+    "AutoConfig": "configuration_reward.GPT2RewardConfig",
+    "AutoModel": "modeling_reward.GPT2RewardModel"
+  },
+  "model_name": "gpt2",
+  "model_type": "gpt2-reward",
+  "torch_dtype": "float32",
+  "transformers_version": "4.43.4"
+}
