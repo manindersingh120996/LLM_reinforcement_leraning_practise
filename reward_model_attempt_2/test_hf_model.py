@@ -3,7 +3,7 @@ import torch
 from transformers import AutoModel, AutoTokenizer
 
 
-MODEL_ID = "YOUR_USERNAME/gpt2-reward-model"
+MODEL_ID = "philomath-1209/gpt2-reward_model_hh-rlhf"
 
 
 tokenizer = AutoTokenizer.from_pretrained(

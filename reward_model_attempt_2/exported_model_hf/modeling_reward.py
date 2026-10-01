@@ -46,6 +46,7 @@ class GPT2RewardModel(PreTrainedModel):
             hidden_size,
             1,
         )
+        self.post_init()
 
     def forward(
         self,

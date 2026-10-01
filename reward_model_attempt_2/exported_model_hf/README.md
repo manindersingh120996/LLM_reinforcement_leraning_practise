@@ -235,7 +235,7 @@ The model can be loaded using the Hugging Face Hub-compatible interface:
 from src.models.reward_model import GPT2RewardModel
 
 model = GPT2RewardModel.from_pretrained(
-    "YOUR_USERNAME/YOUR_REPOSITORY"
+    "philomath-1209/gpt2-reward_model_hh-rlhf"
 )
 ```
 
@@ -267,7 +267,7 @@ from src.models.reward_model import GPT2RewardModel
 
 
 model = GPT2RewardModel.from_pretrained(
-    "YOUR_USERNAME/YOUR_REPOSITORY"
+    "philomath-1209/gpt2-reward_model_hh-rlhf"
 )
 
 tokenizer = AutoTokenizer.from_pretrained("gpt2")
@@ -317,7 +317,7 @@ from src.models.reward_model import GPT2RewardModel
 
 
 model = GPT2RewardModel.from_pretrained(
-    "YOUR_USERNAME/YOUR_REPOSITORY"
+    "philomath-1209/gpt2-reward_model_hh-rlhf"
 )
 
 tokenizer = AutoTokenizer.from_pretrained("gpt2")
