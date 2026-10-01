@@ -13,9 +13,9 @@ data:
 
   validation_ratio: 0.1
 
-  train_sample_size: null
-  validation_sample_size: null
-  test_sample_size: null
+  train_sample_size: 20
+  validation_sample_size: 20
+  test_sample_size: 20
 
   num_workers: 0
 
@@ -39,4 +39,4 @@ checkpoint:
 
   metric: "accuracy"
 
-  resume: true
+  resume: false
