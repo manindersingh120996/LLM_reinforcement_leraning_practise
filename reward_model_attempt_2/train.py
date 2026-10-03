@@ -165,22 +165,51 @@ def main():
     # Learning-rate scheduler
     # --------------------------------------------------
 
-    num_training_steps = (
-        len(train_dataloader)
+    # num_training_steps = (
+    #     len(train_dataloader)
+    #     * training_config["num_epochs"]
+    # )
+
+    # num_warmup_steps = int(
+    #     num_training_steps
+    #     * training_config["scheduler"]["warmup_ratio"]
+    # )
+    # =============================================================
+# TRAINING STEPS
+# =============================================================
+
+    steps_per_epoch = len(train_dataloader)
+
+    total_training_steps = (
+        steps_per_epoch
         * training_config["num_epochs"]
     )
 
     num_warmup_steps = int(
-        num_training_steps
+        total_training_steps
         * training_config["scheduler"]["warmup_ratio"]
+    )
+
+    print(
+        f"Steps per epoch: {steps_per_epoch}"
+    )
+
+    print(
+        f"Total training steps: "
+        f"{total_training_steps}"
+    )
+
+    print(
+        f"Warmup steps: "
+        f"{num_warmup_steps}"
     )
 
     scheduler = get_linear_schedule_with_warmup(
         optimizer=optimizer,
         num_warmup_steps=num_warmup_steps,
-        num_training_steps=num_training_steps,
+        num_training_steps=total_training_steps,
     )
-    print(f"Total training steps: {num_training_steps}")
+    print(f"Total training steps: {total_training_steps}")
     print(f"Warmup steps: {num_warmup_steps}")
 
     # --------------------------------------------------
