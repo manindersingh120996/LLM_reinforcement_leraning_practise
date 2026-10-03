@@ -256,83 +256,101 @@ def main():
 
     for epoch in range(
         start_epoch,
-        training_config["num_epochs"],
+        training_config["num_epochs"] + 1,
     ):
+
+        # =============================================================
+        # TRAIN
+        # =============================================================
 
         train_metrics = trainer.train_epoch(
             train_dataloader,
-            global_step= global_step
-
+            global_step,
+            epoch=epoch,
+            total_epochs=training_config["num_epochs"],
         )
+
+        global_step = train_metrics["global_step"]
+
+        # =============================================================
+        # VALIDATE
+        # =============================================================
 
         val_metrics = trainer.validate(
             val_dataloader
         )
-        current_lr = optimizer.param_groups[0]["lr"]
-
-        global_step = train_metrics["global_step"]
 
         print(
-            f"Current learning rate: {current_lr:.8f}"
+            f"\nEpoch {epoch}/{training_config['num_epochs']}"
         )
 
         print(
-            f"Epoch {epoch + 1}/{training_config['num_epochs']} "
-            f"| Train Loss: {train_metrics['loss']:.4f} "
-            f"| Train Accuracy: {train_metrics['accuracy']:.4f} "
-            f"| Val Loss: {val_metrics['loss']:.4f} "
-            f"| Val Accuracy: {val_metrics['accuracy']:.4f}"
+            f"Train Loss: {train_metrics['loss']:.4f}"
         )
 
-        # --------------------------------------------------
-        # Best checkpoint
-        # --------------------------------------------------
+        print(
+            f"Train Accuracy: "
+            f"{train_metrics['accuracy']:.4f}"
+        )
 
+        print(
+            f"Val Loss: {val_metrics['loss']:.4f}"
+        )
 
+        print(
+            f"Val Accuracy: "
+            f"{val_metrics['accuracy']:.4f}"
+        )
 
-        current_metric = val_metrics[
-            checkpoint_config["metric"]
-        ]
+        # =============================================================
+        # BEST CHECKPOINT
+        # =============================================================
+
+        current_metric = val_metrics["accuracy"]
 
         if current_metric > best_metric:
 
             best_metric = current_metric
 
-            checkpoint_path = os.path.join(
-                checkpoint_config["directory"],
-                checkpoint_config["best_model_name"],
-            )
-
             save_checkpoint(
-                    model=model,
-                    optimizer=optimizer,
-                    scheduler=scheduler,
-                    epoch=epoch + 1,
-                    global_step=global_step,
-                    best_metric=best_metric,
-                    val_loss=val_metrics["loss"],
-                    val_accuracy=val_metrics["accuracy"],
-                    config=config,
-                    path=best_checkpoint_path,
-                )
-
-            print(
-                f"  → New best checkpoint saved "
-                f"({checkpoint_config['metric']}: "
-                f"{current_metric:.4f})"
-            )
-        save_checkpoint(
                 model=model,
                 optimizer=optimizer,
                 scheduler=scheduler,
-                epoch=epoch + 1,
+                epoch=epoch,
                 global_step=global_step,
                 best_metric=best_metric,
                 val_loss=val_metrics["loss"],
                 val_accuracy=val_metrics["accuracy"],
                 config=config,
-                path=latest_checkpoint_path,
+                path=best_checkpoint_path,
             )
+
+            print(
+                f"New best checkpoint saved "
+                f"(accuracy: {best_metric:.4f})"
+            )
+
+        # =============================================================
+        # LATEST CHECKPOINT
+        # =============================================================
+
+        save_checkpoint(
+            model=model,
+            optimizer=optimizer,
+            scheduler=scheduler,
+            epoch=epoch,
+            global_step=global_step,
+            best_metric=best_metric,
+            val_loss=val_metrics["loss"],
+            val_accuracy=val_metrics["accuracy"],
+            config=config,
+            path=latest_checkpoint_path,
+        )
+
+        print(
+            f"Latest checkpoint saved "
+            f"(epoch: {epoch})"
+        )
 
 
 if __name__ == "__main__":
